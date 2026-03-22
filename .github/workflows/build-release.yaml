@@ -1,0 +1,268 @@
+name: "MiktroTik-IISAutoBlocker: Build Output - Release"
+run-name: "MiktroTik-IISAutoBlocker: Build Output - Release - ${{github.run_number}}"
+
+# Will only run if main branch
+# 1) Check out
+# 2) Update Build Versionnumber
+# 3) Build
+#    Remove unwanted files
+# 4) Save Artifact
+# 5) Check in new revision
+# 6) Tag commit
+# 7) Create Release
+
+
+on:
+  push:
+    branches:
+      - 'main'
+      - 'releases/**'
+    paths-ignore:
+      - '.github/**'
+      - 'readme.md'
+      - 'Docs/**'
+  workflow_dispatch:
+    inputs:
+      version_change:
+        description: 'Version Increment Method'
+        required: true
+        type: choice
+        default: 'Build'
+        options:
+          - Major
+          - Minor
+          - Build
+          - Manual
+      version_explicit:
+        description: 'Explicit Version (w.x.y.z)'
+        required: false
+        type: string
+      perform_job:
+        description: 'Confirm you want to Build!'
+        required: true
+        type: boolean
+
+
+env:
+  SolutionName          : 'MiktroTik-IISAutoBlocker.slnx'
+  ProjectFile           : 'MiktroTik-IISAutoBlocker\MiktroTik-IISAutoBlocker.csproj'
+  ProjectName           : 'MiktroTik-IISAutoBlocker'
+  CI                    : "false"
+  BuildOutputPath       : '${{github.workspace}}\MiktroTik-IISAutoBlocker\bin\Release'
+  BuildRefName          : '${{github.ref_name}}'
+  BuildNewVersion       : ''
+  BuildNewVersionInfo   : ''
+  AssemblyInfoPath      : './MiktroTik-IISAutoBlocker/Properties/AssemblyInfo.cs'
+
+
+permissions:
+  contents: write
+
+
+jobs:
+  build-release:
+    name: "Build Release"
+    runs-on: windows-latest
+    steps:
+      - name: Summary
+        shell: pwsh
+        run: |
+            Write-Host "${{env.ProjectName}}: Build Release"
+            Write-Host "Branch: ${{github.ref_name}}"
+            "## ${{env.ProjectName}}: Build Output - Release" >> $env:GITHUB_STEP_SUMMARY
+            "- Branch: ``${{github.ref_name}}``" >> $env:GITHUB_STEP_SUMMARY
+            "- Raised by: ``${{github.actor}}``" >> $env:GITHUB_STEP_SUMMARY
+            "- Version Change: ``${{inputs.version_change}}``" >> $env:GITHUB_STEP_SUMMARY
+            "- Version Explicit: ``${{inputs.version_explicit}}``" >> $env:GITHUB_STEP_SUMMARY
+
+      - name: Check Build Confirmed
+        if: ${{github.event_name == 'workflow_dispatch' && !inputs.perform_job}}
+        shell: pwsh
+        run: |
+            "> [!WARNING] `n> Build Not Confirmed :exclamation:" >> $env:GITHUB_STEP_SUMMARY
+            Write-Output "::error title=Build Checks::Job Not Confirmed"
+            exit 1
+
+      - name: Check Build Verion Set
+        if: ${{github.event_name == 'workflow_dispatch' && !inputs.version_change == 'Manual' && inputs.version_explicit == ''}}
+        shell: pwsh
+        run: |
+            "> [!WARNING] `n> Build Manual Version not Set :exclamation:" >> $env:GITHUB_STEP_SUMMARY
+            Write-Output "::error title=Build Checks::Manual Version not Set"
+            exit 1
+
+      - name: Check Branch is Correct
+        shell: pwsh
+        run: |
+            if (!('${{github.ref_name}}' -eq "main" -OR '${{github.ref_name}}' -like "release/*" )) {
+                "> [!WARNING] `n> Build Branch incorrect for Release :exclamation:" >> $env:GITHUB_STEP_SUMMARY
+                Write-Output "::error title=Build Checks::Branch incorrect for Release"
+                exit 1
+            }
+
+
+      # 1) Check-out repository under $GITHUB_WORKSPACE
+      - name: Checkout Repo
+        uses: actions/checkout@v6
+        with:
+          clean: true
+          fetch-tags: true
+
+      # Add Nuget Tools
+      - name: Setup Nuget
+        uses: nuget/setup-nuget@v2
+        with:
+          nuget-version: latest
+
+      # Add MSBuild to the PATH
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v3
+
+
+      # 2.1) Increment Revision number
+      - name: Update Project Build Version - Major
+        if: ${{inputs.version_change == 'Major'}}
+        id: updateversion_major
+        uses: vers-one/dotnet-project-version-updater@v1.8
+        with:
+          file: ${{env.AssemblyInfoPath}}
+          tags: "AssemblyInfo-cs.AssemblyVersion,AssemblyInfo-cs.AssemblyFileVersion"
+          version: "^.0.0"
+
+      - name: Update Project Build Version - Minor
+        if: ${{github.event_name != 'workflow_dispatch' || inputs.version_change == 'Minor'}}
+        id: updateversion_minor
+        uses: vers-one/dotnet-project-version-updater@v1.8
+        with:
+          file: ${{env.AssemblyInfoPath}}
+          tags: "AssemblyInfo-cs.AssemblyVersion,AssemblyInfo-cs.AssemblyFileVersion"
+          version: "*.^.0"
+
+      - name: Update Project Build Version - Build
+        if: ${{inputs.version_change == 'Build'}}
+        id: updateversion_build
+        uses: vers-one/dotnet-project-version-updater@v1.8
+        with:
+          file: ${{env.AssemblyInfoPath}}
+          tags: "AssemblyInfo-cs.AssemblyVersion,AssemblyInfo-cs.AssemblyFileVersion"
+          version: "*.*.^"
+
+      - name: Update Project Build Version - Manual
+        if: ${{inputs.version_change == 'Manual'}}
+        id: updateversion_manual
+        uses: vers-one/dotnet-project-version-updater@v1.8
+        with:
+          file: ${{env.AssemblyInfoPath}}
+          tags: "AssemblyInfo-cs.AssemblyVersion,AssemblyInfo-cs.AssemblyFileVersion"
+          version: ${{inputs.version_explicit}}
+
+      # 2.2) Fix tag name if has a forward slash
+      - name: Version Tag
+        shell: pwsh
+        run: |
+            # Grab Input variables into powershell
+            $BuildRefNameNew = '${{env.BuildRefName}}'
+            $VersionChange = '${{inputs.version_change}}'
+            if ($VersionChange -eq 'Major') {
+                $BuildNewVersionNew = '${{steps.updateversion_major.outputs.newVersion}}'
+            } elseif ($VersionChange -eq 'Build') {
+                $BuildNewVersionNew = '${{steps.updateversion_build.outputs.newVersion}}'
+            } elseif ($VersionChange -eq 'Manual') {
+                $BuildNewVersionNew = '${{steps.updateversion_manual.outputs.newVersion}}'
+            } else {
+                # ($VersionChange -eq 'Minor')
+                $BuildNewVersionNew = '${{steps.updateversion_minor.outputs.newVersion}}'
+            }
+
+            if($BuildRefNameNew.Contains("/")) {$BuildRefNameNew = $BuildRefNameNew.Replace("/", "-")}
+            $BuildNewVersionInfoNew = "V$BuildNewVersionNew"
+
+            "BuildRefName=$BuildRefNameNew" >> $env:GITHUB_ENV
+            "BuildNewVersion=$BuildNewVersionNew" >> $env:GITHUB_ENV
+            "BuildNewVersionInfo=$BuildNewVersionInfoNew" >> $env:GITHUB_ENV
+
+            Write-Host "Version Tag: $BuildNewVersionInfoNew"
+            "- Version Tag: ``$BuildNewVersionInfoNew`` :rocket:" >> $env:GITHUB_STEP_SUMMARY
+            "- Artifact Name: ${{env.ProjectName}}-$BuildNewVersionInfoNew" >> $env:GITHUB_STEP_SUMMARY
+
+      # 2.4) Update all in repo with new version
+      - name: Update Project Version Details
+        uses: "./.github/update-assemblyinfo-version"
+        with:
+          process_folder: '${{github.workspace}}'
+          version_number: '${{env.BuildNewVersion}}'
+          version_informational: '${{env.BuildNewVersionInfo}}'
+
+
+      # 3.1) Build - MSBUILD
+      - name: MsBuild Restore and Clean
+        run : msbuild ${{env.SolutionName}} /t:"Restore;Clean" /p:Configuration="Release" /p:RestorePackagesConfig=true /p:CheckEolTargetFramework=false /p:NuGetAudit="false"
+
+      - name: MsBuild Build
+        run : msbuild ${{env.SolutionName}} /t:"Build" /p:Configuration="Release" /restore /p:RestorePackagesConfig=true /p:CheckEolTargetFramework=false /p:NuGetAudit="false"
+
+      - name: Check Build was good
+        shell: pwsh
+        run: |
+            if (!(Test-Path -PathType Leaf -Path '${{env.BuildOutputPath}}\${{env.ProjectName}}.exe')) {
+                "> [!WARNING] `n> Build issue - ``${{env.ProjectName}}.exe`` Not Found :exclamation:" >> $env:GITHUB_STEP_SUMMARY
+                Write-Output "::error file=${{env.ProjectName}}.exe,title=Build Issue::Output Not Found"
+                exit 1
+            }
+
+
+      # 3.2) Remove Built Config Files, and unwanted items
+      - name: Remove Unwanted Build Outputs
+        shell: pwsh
+        run: |
+            $ProcessFolder = '${{env.BuildOutputPath}}'
+
+            # Remove PDB files
+            Get-ChildItem -Path "$ProcessFolder\*" -Recurse -Include "*.pdb" | Remove-Item -Force
+
+
+      # 4) Save Artifact
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v7
+        id: artifactupload
+        with:
+          name: "${{env.ProjectName}}-${{env.BuildNewVersionInfo}}"
+          path: ${{env.BuildOutputPath}}
+
+
+      # 5,6) Check in and tag new revision
+      - name: Save new Version
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+            git config --global user.email "${{github.actor_id}}+${{github.actor}}@users.noreply.github.com"
+            git config --global user.name "GitHub Action"
+            git add --ignore-errors */*.csproj
+            git add --ignore-errors */**/AssemblyInfo.cs
+            git commit -m "Release Build ${{env.BuildNewVersionInfo}} [skip ci]"
+            git tag -a "${{env.BuildNewVersionInfo}}" -m "Release Build"
+            git push origin
+            git push --tags origin
+
+
+      # 7) Zip Release
+      - name: Create Release Zip
+        shell: pwsh
+        run: |
+            Compress-Archive -Path ${{env.BuildOutputPath}}/* -DestinationPath ${{env.ProjectName}}-${{env.BuildNewVersionInfo}}.zip
+
+
+      # 8) Create Release
+      - name: Create Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: pwsh
+        run: |
+            gh release create "${{env.BuildNewVersionInfo}}" --generate-notes ${{env.ProjectName}}-${{env.BuildNewVersionInfo}}.zip
+
+      - name: Release Information
+        shell: pwsh
+        run: |
+            "> [!TIP] `n> Release Title: ``$env:BuildNewVersionInfo``" >> $env:GITHUB_STEP_SUMMARY
+            "> [Release Details](${{github.server_url}}/${{github.repository}}/releases/tag/${{env.BuildNewVersionInfo}})" >> $env:GITHUB_STEP_SUMMARY

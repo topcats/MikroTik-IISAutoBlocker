@@ -1,0 +1,77 @@
+name: "Build Output: - Update AssemblyInfo Version Details"
+description: "For each AssemblyInfo.cs, Update the Project Version, InformationalVersion and Copyright details"
+
+# Update AssemblyInfo.cs files
+# Will action any file found in process_folder and subfolders excluding names (packages, backup, test)
+# Set Project Version (number)
+# Set Project Version Info (Text)
+# Set Copyright (to TheOwls plus current Year)
+
+
+inputs:
+  process_folder:
+    description: 'Folder of output to process'
+    required: true
+    type: string
+  version_number:
+    description: 'Version Number (x.y.z.0)'
+    required: true
+    type: string
+  version_informational:
+    description: 'Version Informational (Vx.y.z.0-Branch-Actor)'
+    required: true
+    type: string
+
+
+runs:
+  using: "composite"
+  steps:
+
+    - name: Update Project Version Details
+      shell: pwsh
+      run: |
+          function Update-AssemblyVersion
+          {
+              Param([string]$FilePath,[string]$Ver,[string]$InfoVer)
+              $NewVersion = 'AssemblyVersion("' + $Ver + '")';
+              $NewFileVersion = 'AssemblyFileVersion("' + $Ver + '")';
+              $NewInfoVersion = 'AssemblyInformationalVersion("' + $InfoVer + '")';
+              $TmpFile = $FilePath + ".tmp"
+              Get-Content $FilePath -encoding utf8 |
+                  %{$_ -replace 'AssemblyVersion\("(.*)"\)', $NewVersion} |
+                  %{$_ -replace 'AssemblyFileVersion\("(.*)"\)', $NewFileVersion}  |
+                  %{$_ -replace 'AssemblyInformationalVersion\("(.*)"\)', $NewInfoVersion}  |
+                  Set-Content $TmpFile -encoding utf8
+              if ($FilePath.EndsWith(".cs")) {
+                  if ((Select-String -Path $TmpFile -Pattern "AssemblyVersion") -eq $null) { Add-Content -Path $TmpFile -Value ('[assembly: '+$NewVersion+']') }
+                  if ((Select-String -Path $TmpFile -Pattern "AssemblyFileVersion") -eq $null) { Add-Content -Path $TmpFile -Value ('[assembly: '+$NewFileVersion+']') }
+                  if ((Select-String -Path $TmpFile -Pattern "AssemblyInformationalVersion") -eq $null) { Add-Content -Path $TmpFile -Value ('[assembly: '+$NewInfoVersion+']') }
+              }
+              Move-Item $TmpFile $FilePath -Force
+          }
+          function Update-AssemblyCopyright {
+              Param([string]$FilePath,[string]$CopyItem)
+              $NewCopyright = 'AssemblyCopyright("' + $CopyItem + '")';
+              $TmpFile = $FilePath + ".tmp"
+              Get-Content $FilePath -encoding utf8 |
+                  %{$_ -replace 'AssemblyCopyright\("(.*)"\)', $NewCopyright} |
+                  Set-Content $TmpFile -encoding utf8
+              Move-Item $TmpFile $FilePath -Force
+          }
+
+          # Main Script
+          $ProcessFolder = '${{inputs.process_folder}}'
+          $newInformationalNumber = '${{inputs.version_number}}'
+          $newInformationalVersion = '${{inputs.version_informational}}'
+          $newInformationalCopyright = 'Copyright © TheOwls ' + (Get-Date -Format "yyyy");
+          Write-Host("  Version Number:  $newInformationalNumber")
+          Write-Host("  Version Comment: $newInformationalVersion")
+          Write-Host("  Version Copyright: $newInformationalCopyright")
+
+          # Loop Files in Folder
+          $assemblyFiles = Get-ChildItem -Path "$ProcessFolder\*" -Recurse -Include "AssemblyInfo.cs" | Where-Object {!$_.FullName.ToLower().Contains("\packages\")} | Where-Object {!$_.FullName.ToLower().Contains("backup")} | Where-Object {!$_.FullName.ToLower().Contains("test")}
+          ForEach ($assemblyItem in $assemblyFiles) {
+              Write-Host("    AssemblyInfo File: " + $assemblyItem.FullName)
+              Update-AssemblyVersion -FilePath $assemblyItem.FullName -Ver $newInformationalNumber -InfoVer $newInformationalVersion
+              Update-AssemblyCopyright -FilePath $assemblyItem.FullName -CopyItem $newInformationalCopyright
+          }

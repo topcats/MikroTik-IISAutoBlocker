@@ -1,0 +1,83 @@
+name: "MiktroTik-IISAutoBlocker: Build Validator"
+run-name: "MiktroTik-IISAutoBlocker: Build Validator [${{github.ref_name}}]"
+
+# 1) Check out
+# 2) Build
+# 3) Check Build
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+    paths-ignore:
+      - '.github/**'
+      - 'readme.md'
+      - 'Docs/**'
+
+
+env:
+  SolutionName          : 'MiktroTik-IISAutoBlocker.slnx'
+  ProjectFile           : 'MiktroTik-IISAutoBlocker\MiktroTik-IISAutoBlocker.csproj'
+  ProjectName           : 'MiktroTik-IISAutoBlocker'
+  CI                    : "false"
+  BuildOutputPath       : '${{github.workspace}}\MiktroTik-IISAutoBlocker\bin\Release'
+  BuildRefName          : '${{github.ref_name}}'
+
+
+permissions:
+  contents: write
+
+
+jobs:
+  build-validator:
+    name: "Build Validator"
+    runs-on: windows-latest
+    steps:
+      - name: Summary
+        shell: pwsh
+        run: |
+            Write-Host "${{env.ProjectName}}: Build Validator"
+            Write-Host "Branch: ${{github.ref_name}}"
+            "## ${{env.ProjectName}}: Build Validator" >> $env:GITHUB_STEP_SUMMARY
+            "- Branch: ``${{github.ref_name}}``" >> $env:GITHUB_STEP_SUMMARY
+            "- Raised by: ``${{github.actor}}``" >> $env:GITHUB_STEP_SUMMARY
+
+
+      # 1) Check-out repository under $GITHUB_WORKSPACE
+      - name: Checkout Repo
+        uses: actions/checkout@v6
+        with:
+          clean: true
+          fetch-tags: true
+
+      # Add Nuget Tools
+      - name: Setup Nuget
+        uses: nuget/setup-nuget@v2
+        with:
+          nuget-version: latest
+
+      # Add MSBuild to the PATH
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v3
+
+
+      # 2) Build - MSBUILD
+      - name: MsBuild Restore and Clean
+        run : msbuild ${{env.SolutionName}} /t:"Restore;Clean" /p:Configuration="Release" /p:RestorePackagesConfig=true /p:CheckEolTargetFramework=false /p:NuGetAudit="false"
+
+      - name: MsBuild Build
+        run : msbuild ${{env.SolutionName}} /t:"Build" /p:Configuration="Release" /restore /p:RestorePackagesConfig=true /p:CheckEolTargetFramework=false /p:NuGetAudit="false"
+
+
+      # 3) Check Build
+      - name: Check Built Correctly
+        shell: pwsh
+        run: |
+            if (!(Test-Path -PathType Leaf -Path '${{env.BuildOutputPath}}\${{env.ProjectName}}.exe')) {
+                "> [!WARNING] `n> Build issue - ``${{env.ProjectName}}.exe`` Not Found :exclamation:" >> $env:GITHUB_STEP_SUMMARY
+                Write-Output "::error file=${{env.ProjectName}}.exe,title=Build Issue::Output Not Found"
+                exit 1
+            } else {
+                "> [!TIP] `n> Build Succeeded - ``${{env.ProjectName}}.exe`` created :white_check_mark:" >> $env:GITHUB_STEP_SUMMARY
+                Write-Host "Build Succeeded - ${{env.ProjectName}}.exe Found"
+            }
