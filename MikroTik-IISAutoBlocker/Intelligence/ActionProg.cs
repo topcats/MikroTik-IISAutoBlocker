@@ -1,11 +1,10 @@
-﻿using System;
+﻿using MikroTik_IISAutoBlocker.Intelligence.IIS;
+using MikroTik_IISAutoBlocker.Models;
+using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Net;
-using System.Net.Http;
-using System.Reflection;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace MikroTik_IISAutoBlocker.Intelligence
 {
@@ -16,11 +15,22 @@ namespace MikroTik_IISAutoBlocker.Intelligence
         BackgroundWorker bgWorker = new BackgroundWorker();
         private bool disposedValue;
 
+        private LogFileMonitor _logfilemonitor;
+
+
+        public static List<LogFileLastRead> LogFileLastRead;
+
         public ActionProg(string subFolderName)
         {
             Trace.TraceInformation("MikroTik-IISAutoBlocker.ActionProg({0})", subFolderName);
 
-            _SubFolderName = subFolderName;
+            if (ActionProg.LogFileLastRead == null)
+            {
+                ActionProg.LogFileLastRead = new List<LogFileLastRead>();
+            }
+
+
+            this._SubFolderName = subFolderName;
 
             bgWorker.WorkerReportsProgress = true;
             bgWorker.WorkerSupportsCancellation = true;
@@ -38,22 +48,26 @@ namespace MikroTik_IISAutoBlocker.Intelligence
 
         private void bgWorker_DoWork(object sender, DoWorkEventArgs e)
         {
-            // Here, insert the code for the long-running operation, like downloading a file
-            using (var client = new WebClient())
+            string baseFolder = Properties.Settings.Default.IISLogRootPath;
+            string fullPath = System.IO.Path.Combine(baseFolder, this._SubFolderName);
+
+            this._logfilemonitor = new LogFileMonitor(fullPath);
+
+            while (!e.Cancel)
             {
-                // Simulate progress reporting
-                for (int i = 0; i <= 100; i += 20)
+                // Just Hold the thread for a while to simulate waiting for an event, like a file change
+                Thread.Sleep(60000);
+
+                // Check for cancellation
+                if (bgWorker.CancellationPending)
                 {
-                    if (bgWorker.CancellationPending)
-                    {
-                        e.Cancel = true;
-                        return;
-                    }
-                    bgWorker.ReportProgress(i);
-                    Thread.Sleep(4000); // Simulates a task
+                    e.Cancel = true;
+                    return;
                 }
             }
         }
+
+
 
         private void bgWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {

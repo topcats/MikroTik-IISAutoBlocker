@@ -32,7 +32,16 @@ namespace MikroTik_IISAutoBlocker.Intelligence.IIS
 
 
 
-        private static void OnChanged(object sender, FileSystemEventArgs e) => Console.WriteLine($"{e.ChangeType}: {e.FullPath}");
+        private static void OnChanged(object sender, FileSystemEventArgs e)
+        {
+            Console.WriteLine($"{e.ChangeType}: {e.FullPath}");
+
+            var lfr =  new LogLineReader(e.FullPath);
+
+           
+
+
+        }
 
         private static void OnError(object sender, ErrorEventArgs e) => Console.WriteLine($"Error: {e.GetException().Message}");
     }

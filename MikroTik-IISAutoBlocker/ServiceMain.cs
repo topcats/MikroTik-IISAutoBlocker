@@ -64,8 +64,7 @@ namespace MikroTik_IISAutoBlocker
             foreach (string subFolder in subFolderList)
             {
                 EventLog.WriteEntry(EventLogSourceName, $"Listening to foled: {subFolder}", EventLogEntryType.Information, 21);
-                string fullPath = System.IO.Path.Combine(baseFolder, subFolder);
-                Trace.TraceInformation("Starting ActionProg for folder: {0}", fullPath);
+                Trace.TraceInformation("Starting ActionProg for folder: {0}", subFolder);
                 new Intelligence.ActionProg(subFolder);
             }
 
