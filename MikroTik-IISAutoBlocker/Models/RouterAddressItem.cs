@@ -2,6 +2,9 @@
 
 namespace MikroTik_IISAutoBlocker.Models
 {
+    /// <summary>
+    /// MikroTik Router Firewall Address Item
+    /// </summary>
     internal class RouterAddressItem
     {
 
@@ -30,5 +33,36 @@ namespace MikroTik_IISAutoBlocker.Models
         /// </summary>
         public int Timeout { get; set; }
 
+
+        /// <summary>
+        /// Create JSON of Data
+        /// </summary>
+        public string GetJson()
+        {
+            string ipSubnet = this.Address;
+            ipSubnet = ipSubnet.Substring(0, ipSubnet.LastIndexOf("."));
+            ipSubnet = ipSubnet + ".0/24";
+
+            string output = $"{{\"address\":\"{ipSubnet}\",\"disabled\":\"false\",\"list\":\"{this.ListName}\"";
+
+            // Add Timeout
+            if (this.Timeout > 1)
+            {
+                var timeOuttext = (this.Timeout >= 24) ? $"{(int)this.Timeout / 24}d {(int)this.Timeout % 24}:00:00" : $"{this.Timeout}:00:00";
+                output += $",\"dynamic\":\"true\",\"timeout\":\"{timeOuttext}\"";
+            }
+            else
+            {
+                output += $",\"dynamic\":\"false\"";
+            }
+
+            // Add Comment
+            if (!string.IsNullOrEmpty(this.Comment))
+            {
+                output += $",\"comment\":\"{this.Comment}\"";
+            }
+
+            return output + "}}";
+        }
     }
 }

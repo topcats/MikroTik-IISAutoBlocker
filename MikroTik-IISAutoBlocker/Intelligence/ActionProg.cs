@@ -1,4 +1,5 @@
 ﻿using MikroTik_IISAutoBlocker.Intelligence.IIS;
+using MikroTik_IISAutoBlocker.Intelligence.Router;
 using MikroTik_IISAutoBlocker.Models;
 using System;
 using System.Collections.Generic;
@@ -17,6 +18,8 @@ namespace MikroTik_IISAutoBlocker.Intelligence
 
         private LogFileMonitor _logfilemonitor;
 
+        private RouterAddressList _routerAddressList;
+
 
         public static List<LogFileLastRead> LogFileLastRead;
 
@@ -30,6 +33,7 @@ namespace MikroTik_IISAutoBlocker.Intelligence
             }
 
 
+            this._routerAddressList = new RouterAddressList();
             this._SubFolderName = subFolderName;
 
             bgWorker.WorkerReportsProgress = true;
@@ -52,6 +56,8 @@ namespace MikroTik_IISAutoBlocker.Intelligence
             string fullPath = System.IO.Path.Combine(baseFolder, this._SubFolderName);
 
             this._logfilemonitor = new LogFileMonitor(fullPath);
+            this._logfilemonitor.NewLogLineFound += logfilemonitor_NewLogLine;
+            this._logfilemonitor.Listen();
 
             while (!e.Cancel)
             {
@@ -68,15 +74,25 @@ namespace MikroTik_IISAutoBlocker.Intelligence
         }
 
 
-
+        /// <summary>
+        /// Log Progress Changes alert
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void bgWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
             // Update the UI with the operation's progress
-            Trace.WriteLine($"MikroTik-IISAutoBlocker.ActionProg.bgWorker_ProgressChanged({this._SubFolderName}) Progress: {e.ProgressPercentage}%");
+            Trace.WriteLine($"MikroTik-IISAutoBlocker.ActionProg.bgWorker_ProgressChanged({this._SubFolderName}) Progress: {e.ProgressPercentage}% {e.UserState}");
         }
 
 
 
+        /// <summary>
+        /// The background worker finished??
+        /// </summary>
+        /// <remarks>It should not get here</remarks>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void bgWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             if (e.Error != null)
@@ -113,6 +129,25 @@ namespace MikroTik_IISAutoBlocker.Intelligence
             // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
+        }
+
+
+        private void logfilemonitor_NewLogLine(object sender, LogFileLine e)
+        {
+            // Build Block Item
+            var newItem = new RouterAddressItem()
+            {
+                ListName = Properties.Settings.Default.RouterAddressListName,
+                Comment = $"Site: {e.ServerIISname} {e.ServerSiteName} {e.ClientURIStem}",
+                Created = e.Time,
+                Address = e.ClientIP,
+                Timeout = Properties.Settings.Default.RuleExpireTime
+            };
+
+            // Add Item
+            this._routerAddressList.AddItem(newItem);
+
+            this.bgWorker.ReportProgress(20, $"New Entry: {e.ClientIP} for {e.ServerIISname}");
         }
     }
 }

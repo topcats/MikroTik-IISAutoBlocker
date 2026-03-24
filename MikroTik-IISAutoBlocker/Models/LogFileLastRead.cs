@@ -2,6 +2,9 @@
 
 namespace MikroTik_IISAutoBlocker.Models
 {
+    /// <summary>
+    /// IIS Log File Last Read marker
+    /// </summary>
     internal class LogFileLastRead
     {
         /// <summary>

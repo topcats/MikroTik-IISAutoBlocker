@@ -10,6 +10,12 @@ namespace MikroTik_IISAutoBlocker.Intelligence.IIS
         LogFileLastRead _logFileLastRead;
 
 
+        /// <summary>
+        /// Raisd Upon new valid LogLine
+        /// </summary>
+        public event EventHandler<LogFileLine> NewLogLine;
+
+
         public LogLineReader(string LogFilePath)
         {
             // Check if already processed this file
@@ -18,7 +24,16 @@ namespace MikroTik_IISAutoBlocker.Intelligence.IIS
                 LogFileName = LogFilePath,
                 LastReadTime = DateTime.UtcNow
             };
+        }
 
+
+
+        /// <summary>
+        /// Start Process
+        /// </summary>
+        /// <remarks>ReadNewLine and Update LastRead</remarks>
+        public void Process()
+        {
             ReadNewLines();
 
             SaveLastRead();
@@ -69,12 +84,13 @@ namespace MikroTik_IISAutoBlocker.Intelligence.IIS
                     break;
 
                 // Process Details
-                if (logData.ServerStatus >= 400 &&
+                if (logData.ServerStatus >= 400 && logData.ServerStatus <= 500 &&
                     ((logData.ClientSourceIP == "-" && !logData.ClientIP.StartsWith(safeSubnet)) ||
                     (logData.ClientSourceIP != "-" && !logData.ClientSourceIP.StartsWith(safeSubnet))))
                 {
                     // Problem found so block it
-                    Trace.TraceInformation("MikroTik-IISAutoBlocker.LogLineReader: {0} {1} {2} {3} {4} {5}", logData.Date, logData.Time, logData.ClientIP, logData.ClientMethod, logData.ClientURIStem, logData.ServerStatus);
+                    Trace.TraceInformation("MikroTik-IISAutoBlocker.IIS.LogLineReader: {0} {1} {2} {3} {4} {5}", logData.Date, logData.Time, logData.ClientIP, logData.ClientMethod, logData.ClientURIStem, logData.ServerStatus);
+                    NewLogLine.Invoke(this, logData);
                 }
 
                 this._logFileLastRead.LastReadPosition++;
@@ -121,7 +137,7 @@ namespace MikroTik_IISAutoBlocker.Intelligence.IIS
                 {
                     Date = DateTime.Parse(parts[0]),
                     Time = DateTime.Parse(parts[1]),
-                    ServerSitename = parts[2],
+                    ServerIISname = parts[2],
                     ServerComputername = parts[3],
                     ServerIP = parts[4],
                     ClientMethod = parts[5],
@@ -145,7 +161,7 @@ namespace MikroTik_IISAutoBlocker.Intelligence.IIS
             }
             catch (Exception ex)
             {
-                Trace.TraceError("LogLineReader.ReadLine: Error parsing line: {0}. Exception: {1}", line, ex);
+                Trace.TraceError("IIS.LogLineReader.ReadLine: Error parsing line: {0}. Exception: {1}", line, ex);
                 return null;
             }
         }

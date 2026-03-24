@@ -2,6 +2,9 @@
 
 namespace MikroTik_IISAutoBlocker.Models
 {
+    /// <summary>
+    /// IIS Log File Line
+    /// </summary>
     internal class LogFileLine
     {
         // #Fields: date time s-sitename s-computername s-ip cs-method cs-uri-stem cs-uri-query s-port cs-username c-ip cs(User-Agent) cs(Referer) cs-host sc-status sc-substatus sc-win32-status sc-bytes cs-bytes time-taken SOAPAction ClientSourceIP
@@ -19,7 +22,7 @@ namespace MikroTik_IISAutoBlocker.Models
         /// <summary>
         /// s-sitename - IIS Site name
         /// </summary>
-        public string ServerSitename { get; set; }
+        public string ServerIISname { get; set; }
 
         /// <summary>
         /// s-computername - Host Server name
