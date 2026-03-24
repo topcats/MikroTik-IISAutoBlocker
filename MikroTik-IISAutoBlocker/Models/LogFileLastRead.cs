@@ -1,0 +1,19 @@
+﻿using System;
+
+namespace MikroTik_IISAutoBlocker.Models
+{
+    /// <summary>
+    /// IIS Log File Last Read marker
+    /// </summary>
+    internal class LogFileLastRead
+    {
+        /// <summary>
+        /// Full path of the log file
+        /// </summary>
+        public string LogFileName { get; set; }
+
+        public long LastReadPosition { get; set; }
+
+        public DateTime LastReadTime { get; set; }
+    }
+}
