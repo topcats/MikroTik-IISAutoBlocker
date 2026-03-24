@@ -2,5 +2,9 @@
   <Folder Name="/Solution Items/">
     <File Path="README.md" />
   </Folder>
+  <Folder Name="/Solution Items/Workflows/">
+    <File Path=".github/workflows/build-release.yaml" />
+    <File Path=".github/workflows/build-validator.yaml" />
+  </Folder>
   <Project Path="MikroTik-IISAutoBlocker/MikroTik-IISAutoBlocker.csproj" Id="01f76e27-8977-4b99-8630-0f2d3070f318" />
 </Solution>

@@ -189,6 +189,7 @@ namespace MikroTik_IISAutoBlocker.Intelligence.Router
                     else
                     {
                         Trace.TraceWarning("Router.RouterBase.DoPut({0}) Failed", path);
+                        string jsonResult = response.Content.ReadAsStringAsync().Result;
                         return false; //$"Error: {response.StatusCode} - {response.ReasonPhrase}");
                     }
                 }

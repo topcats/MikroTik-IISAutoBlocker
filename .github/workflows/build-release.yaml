@@ -1,5 +1,5 @@
-name: "MiktroTik-IISAutoBlocker: Build Output - Release"
-run-name: "MiktroTik-IISAutoBlocker: Build Output - Release - ${{github.run_number}}"
+name: "MikroTik-IISAutoBlocker: Build Output - Release"
+run-name: "MikroTik-IISAutoBlocker: Build Output - Release - ${{github.run_number}}"
 
 # Will only run if main branch
 # 1) Check out
@@ -44,15 +44,15 @@ on:
 
 
 env:
-  SolutionName          : 'MiktroTik-IISAutoBlocker.slnx'
-  ProjectFile           : 'MiktroTik-IISAutoBlocker\MiktroTik-IISAutoBlocker.csproj'
-  ProjectName           : 'MiktroTik-IISAutoBlocker'
+  SolutionName          : 'MikroTik-IISAutoBlocker.slnx'
+  ProjectFile           : 'MikroTik-IISAutoBlocker\MikroTik-IISAutoBlocker.csproj'
+  ProjectName           : 'MikroTik-IISAutoBlocker'
   CI                    : "false"
-  BuildOutputPath       : '${{github.workspace}}\MiktroTik-IISAutoBlocker\bin\Release'
+  BuildOutputPath       : '${{github.workspace}}\MikroTik-IISAutoBlocker\bin\Release'
   BuildRefName          : '${{github.ref_name}}'
   BuildNewVersion       : ''
   BuildNewVersionInfo   : ''
-  AssemblyInfoPath      : './MiktroTik-IISAutoBlocker/Properties/AssemblyInfo.cs'
+  AssemblyInfoPath      : './MikroTik-IISAutoBlocker/Properties/AssemblyInfo.cs'
 
 
 permissions:
