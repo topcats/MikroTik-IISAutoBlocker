@@ -52,7 +52,7 @@ jobs:
 
       # Add Nuget Tools
       - name: Setup Nuget
-        uses: nuget/setup-nuget@v2
+        uses: nuget/setup-nuget@v3
         with:
           nuget-version: latest
 
