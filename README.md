@@ -21,19 +21,25 @@ Windows Service to monitor IIS logs for webscanners, then add a block rule to a 
    ```powershell
    New-Service -Name "MikroTik-IISAutoBlocker" -BinaryPathName "C:\Path\To\MikroTik-IISAutoBlocker.exe"
    ```
+4. Configure the `App.config` file with your settings
 
 ### App.config
 
 - IISLogRootPath
-- IISSubFolder
+- IISSubFolders
 - RouterIP
 - RouterAddressListName
 - RuleExpireTime
-- SafeSubnet
+- SafeSubnets
 - RouterUser
 - RouterPass
 
 ## Versions
+
+### V1.2.0 (October 2026)
+
+- Config change for `IISSubFolders` to allow multiple folders to be scanned
+- Added `SafeSubnets` to allow for multiple subnets to be excluded from blocking
 
 ### V1.1.0 (March 2026)
 

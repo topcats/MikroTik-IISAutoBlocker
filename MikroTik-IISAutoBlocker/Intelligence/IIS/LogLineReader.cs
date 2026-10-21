@@ -1,7 +1,9 @@
 ﻿using MikroTik_IISAutoBlocker.Models;
 using System;
+using System.Collections.Specialized;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 
 namespace MikroTik_IISAutoBlocker.Intelligence.IIS
 {
@@ -11,7 +13,7 @@ namespace MikroTik_IISAutoBlocker.Intelligence.IIS
 
 
         /// <summary>
-        /// Raisd Upon new valid LogLine
+        /// Raised Upon new valid LogLine to be blocked
         /// </summary>
         public event EventHandler<LogFileLine> NewLogLine;
 
@@ -61,7 +63,7 @@ namespace MikroTik_IISAutoBlocker.Intelligence.IIS
 
             var lines = content.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
 
-            // has old read position,, use that else just get last few lines
+            // has old read position, use that else just get last few lines
             if (this._logFileLastRead.LastReadPosition == 0)
             {
                 int linecount = lines.Length;
@@ -69,7 +71,7 @@ namespace MikroTik_IISAutoBlocker.Intelligence.IIS
             }
 
             // Get lines
-            string safeSubnet = Properties.Settings.Default.SafeSubnet;
+            StringCollection safeSubnets = Properties.Settings.Default.SafeSubnets;
             string line;
             do
             {
@@ -83,10 +85,17 @@ namespace MikroTik_IISAutoBlocker.Intelligence.IIS
                 if (logData == null)
                     break;
 
+                // Exclude Safe Subnets
+                if ((logData.ClientSourceIP == "-" && safeSubnets.OfType<string>().Any(x => logData.ClientIP.StartsWith(x))) ||
+                    (logData.ClientSourceIP != "-" && safeSubnets.OfType<string>().Any(x => logData.ClientSourceIP.StartsWith(x))))
+                {
+                    // Safe Subnet so skip
+                    this._logFileLastRead.LastReadPosition++;
+                    continue;
+                }
+
                 // Process Details
-                if (logData.ServerStatus >= 400 && logData.ServerStatus <= 500 &&
-                    ((logData.ClientSourceIP == "-" && !logData.ClientIP.StartsWith(safeSubnet)) ||
-                    (logData.ClientSourceIP != "-" && !logData.ClientSourceIP.StartsWith(safeSubnet))))
+                if (logData.ServerStatus >= 400 && logData.ServerStatus <= 500)
                 {
                     // Problem found so block it
                     Trace.TraceInformation("MikroTik-IISAutoBlocker.IIS.LogLineReader: {0} {1} {2} {3} {4} {5}", logData.Date, logData.Time, logData.ClientIP, logData.ClientMethod, logData.ClientURIStem, logData.ServerStatus);

@@ -12,7 +12,7 @@ namespace MikroTik_IISAutoBlocker.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "18.4.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "18.11.0.0")]
     internal sealed partial class Settings : global::System.Configuration.ApplicationSettingsBase {
         
         private static Settings defaultInstance = ((Settings)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new Settings())));
@@ -37,9 +37,9 @@ namespace MikroTik_IISAutoBlocker.Properties {
         [global::System.Configuration.DefaultSettingValueAttribute("<?xml version=\"1.0\" encoding=\"utf-16\"?>\r\n<ArrayOfString xmlns:xsd=\"http://www.w3." +
             "org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\r\n  <s" +
             "tring>W3SVC1</string>\r\n</ArrayOfString>")]
-        public global::System.Collections.Specialized.StringCollection IISSubFolder {
+        public global::System.Collections.Specialized.StringCollection IISSubFolders {
             get {
-                return ((global::System.Collections.Specialized.StringCollection)(this["IISSubFolder"]));
+                return ((global::System.Collections.Specialized.StringCollection)(this["IISSubFolders"]));
             }
         }
         
@@ -72,10 +72,12 @@ namespace MikroTik_IISAutoBlocker.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
-        public string SafeSubnet {
+        [global::System.Configuration.DefaultSettingValueAttribute("<?xml version=\"1.0\" encoding=\"utf-16\"?>\r\n<ArrayOfString xmlns:xsd=\"http://www.w3." +
+            "org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\r\n  <s" +
+            "tring>192.168.0.</string>\r\n</ArrayOfString>")]
+        public global::System.Collections.Specialized.StringCollection SafeSubnets {
             get {
-                return ((string)(this["SafeSubnet"]));
+                return ((global::System.Collections.Specialized.StringCollection)(this["SafeSubnets"]));
             }
         }
         
