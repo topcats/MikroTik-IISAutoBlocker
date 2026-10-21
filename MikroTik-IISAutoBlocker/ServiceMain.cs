@@ -51,7 +51,7 @@ namespace MikroTik_IISAutoBlocker
 
             // Read Config
             string baseFolder = Properties.Settings.Default.IISLogRootPath;
-            StringCollection subFolderList = Properties.Settings.Default.IISSubFolder;
+            StringCollection subFolderList = Properties.Settings.Default.IISSubFolders;
 
             // Validate Config
             if (string.IsNullOrWhiteSpace(baseFolder))
