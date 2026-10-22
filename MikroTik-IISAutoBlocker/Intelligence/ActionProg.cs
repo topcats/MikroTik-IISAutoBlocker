@@ -53,7 +53,7 @@ namespace MikroTik_IISAutoBlocker.Intelligence
         private void bgWorker_DoWork(object sender, DoWorkEventArgs e)
         {
             string baseFolder = Properties.Settings.Default.IISLogRootPath;
-            string fullPath = System.IO.Path.Combine(baseFolder, this._SubFolderName);
+            string fullPath = (this._SubFolderName.Contains(":\\")) ? this._SubFolderName : System.IO.Path.Combine(baseFolder, this._SubFolderName);
 
             this._logfilemonitor = new LogFileMonitor(fullPath);
             this._logfilemonitor.NewLogLineFound += logfilemonitor_NewLogLine;

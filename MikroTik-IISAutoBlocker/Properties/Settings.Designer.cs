@@ -98,5 +98,14 @@ namespace MikroTik_IISAutoBlocker.Properties {
                 return ((string)(this["RouterPass"]));
             }
         }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("C:\\Windows\\System32\\LogFiles\\HTTPERR")]
+        public string IISErrLogPath {
+            get {
+                return ((string)(this["IISErrLogPath"]));
+            }
+        }
     }
 }

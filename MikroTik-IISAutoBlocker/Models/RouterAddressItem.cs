@@ -56,9 +56,13 @@ namespace MikroTik_IISAutoBlocker.Models
                 output += $",\"dynamic\":\"false\"";
             }
 
-            // Add Comment
+            // Add Comment, limit to 120 chars
             if (!string.IsNullOrEmpty(this.Comment))
             {
+                if (this.Comment.Length > 120)
+                {
+                    this.Comment = this.Comment.Substring(0, 120);
+                }
                 output += $",\"comment\":\"{this.Comment}\"";
             }
 

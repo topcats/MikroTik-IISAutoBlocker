@@ -32,5 +32,8 @@
     <Setting Name="RouterPass" Type="System.String" Scope="Application">
       <Value Profile="(Default)" />
     </Setting>
+    <Setting Name="IISErrLogPath" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">C:\Windows\System32\LogFiles\HTTPERR</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

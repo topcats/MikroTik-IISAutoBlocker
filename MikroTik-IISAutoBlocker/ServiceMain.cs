@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Specialized;
-using System.Configuration;
 using System.Diagnostics;
 using System.Reflection;
 using System.ServiceProcess;
@@ -52,6 +51,7 @@ namespace MikroTik_IISAutoBlocker
             // Read Config
             string baseFolder = Properties.Settings.Default.IISLogRootPath;
             StringCollection subFolderList = Properties.Settings.Default.IISSubFolders;
+            string errFolder = Properties.Settings.Default.IISErrLogPath;
 
             // Validate Config
             if (string.IsNullOrWhiteSpace(baseFolder))
@@ -63,11 +63,16 @@ namespace MikroTik_IISAutoBlocker
             // Start ActionProgs
             foreach (string subFolder in subFolderList)
             {
-                EventLog.WriteEntry(EventLogSourceName, $"Listening to foled: {subFolder}", EventLogEntryType.Information, 21);
+                EventLog.WriteEntry(EventLogSourceName, $"Listening to folder: {subFolder}", EventLogEntryType.Information, 21);
                 Trace.TraceInformation("Starting ActionProg for folder: {0}", subFolder);
                 new Intelligence.ActionProg(subFolder);
             }
-
-        }
+            if (!string.IsNullOrWhiteSpace(errFolder))
+            {
+                EventLog.WriteEntry(EventLogSourceName, $"Listening to error folder: {errFolder}", EventLogEntryType.Information, 21);
+                Trace.TraceInformation("Starting ActionProg for error folder: {0}", errFolder);
+                new Intelligence.ActionProg(errFolder);
+            }
+                    }
     }
 }
