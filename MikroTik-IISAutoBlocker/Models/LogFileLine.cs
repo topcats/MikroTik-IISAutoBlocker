@@ -65,6 +65,11 @@ namespace MikroTik_IISAutoBlocker.Models
         public string ClientIP { get; set; }
 
         /// <summary>
+        /// c-port - Client port number that made the request (might be a proxy)
+        /// </summary>
+        public int ClientPort { get; set; }
+
+        /// <summary>
         /// cs(User-Agent) - User-Agent string sent by the client, which typically includes information about the client's browser, operating system, and device type
         /// </summary>
         public string ClientUserAgent { get; set; }

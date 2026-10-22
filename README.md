@@ -26,6 +26,7 @@ Windows Service to monitor IIS logs for webscanners, then add a block rule to a 
 ### App.config
 
 - IISLogRootPath
+- IISErrLogPath
 - IISSubFolders
 - RouterIP
 - RouterAddressListName
@@ -35,6 +36,12 @@ Windows Service to monitor IIS logs for webscanners, then add a block rule to a 
 - RouterPass
 
 ## Versions
+
+### V1.3.0 (October 2026)
+
+- Added `IISErrLogPath` to allow for scanning of IIS error logs
+- Resilience for invalid log lines, will now skip and continue processing
+- Limit entry comment to 120 chars
 
 ### V1.2.0 (October 2026)
 
